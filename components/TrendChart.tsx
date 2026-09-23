@@ -136,7 +136,8 @@ export default function TrendChart({
         </ResponsiveContainer>
       </div>
       <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "8px 2px 0", lineHeight: 1.5 }}>
-        Dashed lines are the straight-line trend over the selected range.
+        Dashed lines are a curved (quadratic) trend fit over the selected range, so they can bend
+        with the data instead of forcing a straight average slope.
       </p>
       <ChartExportFooter
         source="Hong Kong Immigration Department"
