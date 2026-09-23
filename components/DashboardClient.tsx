@@ -7,6 +7,7 @@ import {
   rollingAverage,
   shiftedSeries,
   pctChange,
+  linearTrend,
   YOY_OFFSET_DAYS,
 } from "@/lib/aggregate";
 import {
@@ -88,11 +89,11 @@ function Checkbox({
 }
 
 export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf: string }) {
-  const [avgWindow, setAvgWindow] = useState<(typeof WINDOWS)[number]>(7);
+  const [avgWindow, setAvgWindow] = useState<(typeof WINDOWS)[number]>(30);
   const [includeRail, setIncludeRail] = useState(true);
   const [includeBridge, setIncludeBridge] = useState(false);
   const [breakdownFlow, setBreakdownFlow] = useState<"southbound" | "northbound">("northbound");
-  const [rangeDays, setRangeDays] = useState(120);
+  const [rangeDays, setRangeDays] = useState(365);
 
   const included = useMemo(() => {
     const s = new Set<string>(SHENZHEN_LAND_CROSSINGS as readonly string[]);
@@ -112,19 +113,25 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
   const latestIdx = n - 1;
 
   const chartStart = Math.max(0, n - rangeDays);
-  const chartData = useMemo(
-    () =>
-      totals.dates.slice(chartStart).map((date, i) => {
-        const idx = chartStart + i;
-        return {
-          date,
-          southbound: southboundMA[idx],
-          northbound: northboundMA[idx],
-          net: southboundMA[idx] - northboundMA[idx],
-        };
-      }),
-    [totals.dates, southboundMA, northboundMA, chartStart]
-  );
+  const chartData = useMemo(() => {
+    const southboundSlice = southboundMA.slice(chartStart);
+    const northboundSlice = northboundMA.slice(chartStart);
+    const southboundTrend = linearTrend(southboundSlice);
+    const northboundTrend = linearTrend(northboundSlice);
+    return totals.dates.slice(chartStart).map((date, i) => {
+      const net = southboundSlice[i] - northboundSlice[i];
+      return {
+        date,
+        southbound: southboundSlice[i],
+        northbound: northboundSlice[i],
+        southboundTrend: southboundTrend[i],
+        northboundTrend: northboundTrend[i],
+        net,
+        netInflow: net >= 0 ? net : 0,
+        netOutflow: net < 0 ? net : 0,
+      };
+    });
+  }, [totals.dates, southboundMA, northboundMA, chartStart]);
 
   const breakdownCrossings = includeBridge
     ? [...SHENZHEN_LAND_CROSSINGS, EXPRESS_RAIL, HZMB]
@@ -239,7 +246,7 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
         title="Trend"
         subtitle={`${avgWindow}-day rolling average, ${
           rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
-        }. Net is southbound minus northbound. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
+        }. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
       >
         <TrendChart data={chartData} window={avgWindow} />
       </Card>

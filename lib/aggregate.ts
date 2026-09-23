@@ -82,5 +82,29 @@ export function pctChange(current: number, prior: number | null): number | null 
 
 export function formatDateShort(iso: string): string {
   const d = new Date(iso + "T00:00:00Z");
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", timeZone: "UTC" });
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit", timeZone: "UTC" });
+}
+
+// Ordinary least squares fit of values against their index; returns the
+// fitted (trend) value at each index. Used to draw a straight trendline
+// over whatever range is currently on screen.
+export function linearTrend(values: number[]): number[] {
+  const n = values.length;
+  if (n === 0) return [];
+  if (n === 1) return [values[0]];
+
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumXX = 0;
+  for (let i = 0; i < n; i++) {
+    sumX += i;
+    sumY += values[i];
+    sumXY += i * values[i];
+    sumXX += i * i;
+  }
+  const denom = n * sumXX - sumX * sumX;
+  const slope = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+  return values.map((_, i) => intercept + slope * i);
 }
