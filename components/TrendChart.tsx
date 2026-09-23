@@ -23,6 +23,7 @@ type Point = {
   southboundTrend: number;
   northboundTrend: number;
   net: number;
+  netTrend: number;
   netInflow: number;
   netOutflow: number;
 };
@@ -68,6 +69,12 @@ export default function TrendChart({
               tick={{ fill: "var(--text-muted)", fontSize: 11 }}
               width={56}
               tickFormatter={(v) => (Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)}
+              label={{
+                value: "People / day",
+                angle: -90,
+                position: "insideLeft",
+                style: { fill: "var(--text-muted)", fontSize: 11 },
+              }}
             />
             <Tooltip
               contentStyle={{
@@ -88,36 +95,30 @@ export default function TrendChart({
             <Area
               type="monotone"
               dataKey="netInflow"
-              name="Net inflow to HK (favors HK footfall)"
+              legendType="none"
               stroke="none"
               fill="var(--net-inflow)"
-              fillOpacity={0.18}
+              fillOpacity={0.12}
               baseValue={0}
               isAnimationActive={false}
+              tooltipType="none"
             />
             <Area
               type="monotone"
               dataKey="netOutflow"
-              name="Net outflow from HK (favors Shenzhen footfall)"
+              legendType="none"
               stroke="none"
               fill="var(--net-outflow)"
-              fillOpacity={0.18}
+              fillOpacity={0.12}
               baseValue={0}
               isAnimationActive={false}
+              tooltipType="none"
             />
             <Line
               type="monotone"
               dataKey="southbound"
               name={`Southbound (${window}d avg)`}
               stroke="var(--southbound)"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="northbound"
-              name={`Northbound (${window}d avg)`}
-              stroke="var(--northbound)"
               strokeWidth={2}
               dot={false}
             />
@@ -135,9 +136,37 @@ export default function TrendChart({
             />
             <Line
               type="monotone"
+              dataKey="northbound"
+              name={`Northbound (${window}d avg)`}
+              stroke="var(--northbound)"
+              strokeWidth={2}
+              dot={false}
+            />
+            <Line
+              type="monotone"
               dataKey="northboundTrend"
               name="Northbound trend"
               stroke="var(--northbound)"
+              strokeWidth={1.5}
+              strokeOpacity={0.6}
+              strokeDasharray="1 5"
+              strokeLinecap="round"
+              dot={false}
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="net"
+              name={`Net, southbound − northbound (${window}d avg)`}
+              stroke="var(--net)"
+              strokeWidth={2}
+              dot={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="netTrend"
+              name="Net trend"
+              stroke="var(--net)"
               strokeWidth={1.5}
               strokeOpacity={0.6}
               strokeDasharray="1 5"
@@ -149,9 +178,9 @@ export default function TrendChart({
         </ResponsiveContainer>
       </div>
       <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "8px 2px 0", lineHeight: 1.5 }}>
-        Dotted lines are the straight-line trend over the selected range. Green fill = more people
-        entering HK than leaving (net inflow); red fill = more residents leaving than visitors
-        arriving (net outflow toward Shenzhen).
+        Dotted lines are the straight-line trend over the selected range. Net = southbound minus
+        northbound. Background fill marks which side of zero it's on: green = net inflow to HK
+        (favors HK footfall), red = net outflow toward Shenzhen.
       </p>
     </div>
   );

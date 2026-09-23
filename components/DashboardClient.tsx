@@ -116,10 +116,12 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
   const chartData = useMemo(() => {
     const southboundSlice = southboundMA.slice(chartStart);
     const northboundSlice = northboundMA.slice(chartStart);
+    const netSlice = southboundSlice.map((v, i) => v - northboundSlice[i]);
     const southboundTrend = linearTrend(southboundSlice);
     const northboundTrend = linearTrend(northboundSlice);
+    const netTrend = linearTrend(netSlice);
     return totals.dates.slice(chartStart).map((date, i) => {
-      const net = southboundSlice[i] - northboundSlice[i];
+      const net = netSlice[i];
       return {
         date,
         southbound: southboundSlice[i],
@@ -127,6 +129,7 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
         southboundTrend: southboundTrend[i],
         northboundTrend: northboundTrend[i],
         net,
+        netTrend: netTrend[i],
         netInflow: net >= 0 ? net : 0,
         netOutflow: net < 0 ? net : 0,
       };
