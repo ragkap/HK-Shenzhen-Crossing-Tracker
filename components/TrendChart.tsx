@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
   ReferenceArea,
+  ReferenceLine,
 } from "recharts";
 import { formatDateShort } from "@/lib/aggregate";
 import { HOLIDAYS } from "@/lib/holidays";
@@ -18,6 +19,7 @@ type Point = {
   date: string;
   southbound: number;
   northbound: number;
+  net: number;
 };
 
 export default function TrendChart({
@@ -76,6 +78,7 @@ export default function TrendChart({
             ]}
           />
           <Legend wrapperStyle={{ fontSize: 12, color: "var(--text-secondary)" }} />
+          <ReferenceLine y={0} stroke="var(--baseline)" strokeWidth={1} />
           <Line
             type="monotone"
             dataKey="southbound"
@@ -90,6 +93,15 @@ export default function TrendChart({
             name={`Northbound (${window}d avg)`}
             stroke="var(--northbound)"
             strokeWidth={2}
+            dot={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="net"
+            name={`Net, southbound − northbound (${window}d avg)`}
+            stroke="var(--net)"
+            strokeWidth={2}
+            strokeDasharray="4 3"
             dot={false}
           />
         </ComposedChart>

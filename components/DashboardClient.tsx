@@ -24,6 +24,15 @@ import DataTable from "./DataTable";
 
 const WINDOWS = [7, 14, 30] as const;
 
+const RANGES: { days: number; label: string }[] = [
+  { days: 60, label: "60d" },
+  { days: 120, label: "120d" },
+  { days: 365, label: "1y" },
+  { days: 730, label: "2y" },
+  { days: 1095, label: "3y" },
+  { days: Infinity, label: "All" },
+];
+
 function ToggleButton({
   active,
   onClick,
@@ -105,11 +114,15 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
   const chartStart = Math.max(0, n - rangeDays);
   const chartData = useMemo(
     () =>
-      totals.dates.slice(chartStart).map((date, i) => ({
-        date,
-        southbound: southboundMA[chartStart + i],
-        northbound: northboundMA[chartStart + i],
-      })),
+      totals.dates.slice(chartStart).map((date, i) => {
+        const idx = chartStart + i;
+        return {
+          date,
+          southbound: southboundMA[idx],
+          northbound: northboundMA[idx],
+          net: southboundMA[idx] - northboundMA[idx],
+        };
+      }),
     [totals.dates, southboundMA, northboundMA, chartStart]
   );
 
@@ -189,9 +202,9 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
           ))}
         </div>
         <div style={{ display: "flex", gap: 6 }}>
-          {[60, 120, 365].map((d) => (
-            <ToggleButton key={d} active={rangeDays === d} onClick={() => setRangeDays(d)}>
-              {d === 365 ? "1y" : `${d}d`}
+          {RANGES.map(({ days, label }) => (
+            <ToggleButton key={label} active={rangeDays === days} onClick={() => setRangeDays(days)}>
+              {label}
             </ToggleButton>
           ))}
         </div>
@@ -222,7 +235,12 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
         />
       </section>
 
-      <Card title="Trend" subtitle={`${avgWindow}-day rolling average, last ${rangeDays} days. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}>
+      <Card
+        title="Trend"
+        subtitle={`${avgWindow}-day rolling average, ${
+          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
+        }. Net is southbound minus northbound. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
+      >
         <TrendChart data={chartData} window={avgWindow} />
       </Card>
 
