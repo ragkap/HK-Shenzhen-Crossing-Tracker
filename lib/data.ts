@@ -25,7 +25,7 @@ export async function fetchDailyRows(): Promise<{
   rows: DailyRow[];
   asOf: string;
 }> {
-  const res = await fetch(CSV_URL, { next: { revalidate: 21600 } });
+  const res = await fetch(CSV_URL, { next: { revalidate: 86400 } });
   if (!res.ok) {
     throw new Error(`Failed to fetch immigration CSV: ${res.status}`);
   }

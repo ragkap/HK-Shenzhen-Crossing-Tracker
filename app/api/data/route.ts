@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchDailyRows } from "@/lib/data";
 
-export const revalidate = 21600; // 6h — source updates once a day
+export const revalidate = 86400; // 24h — source updates once a day
 
 export async function GET() {
   try {

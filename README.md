@@ -33,6 +33,6 @@ pnpm dev
 
 Push to a git remote and import the repo in Vercel — no environment variables
 or build config needed. The data fetch runs server-side on each request with
-a 6-hour ISR revalidation window (`revalidate = 21600`), since the source
+a 24-hour ISR revalidation window (`revalidate = 86400`), since the source
 updates once a day.
 # HK-Shenzhen-Crossing-Tracker
