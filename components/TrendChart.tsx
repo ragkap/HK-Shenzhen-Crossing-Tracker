@@ -15,6 +15,7 @@ import {
 import { formatDateShort } from "@/lib/aggregate";
 import { HOLIDAYS } from "@/lib/holidays";
 import ChartExportFooter from "./ChartExportFooter";
+import ChartHeader from "./ChartHeader";
 
 type Point = {
   date: string;
@@ -27,9 +28,13 @@ type Point = {
 export default function TrendChart({
   data,
   window,
+  title,
+  subtitle,
 }: {
   data: Point[];
   window: number;
+  title: string;
+  subtitle?: string;
 }) {
   const captureRef = useRef<HTMLDivElement>(null);
   const first = data[0]?.date;
@@ -40,6 +45,7 @@ export default function TrendChart({
 
   return (
     <div ref={captureRef} style={{ width: "100%" }}>
+      <ChartHeader title={title} subtitle={subtitle} />
       <div style={{ width: "100%", height: 480 }}>
         <ResponsiveContainer>
           <ComposedChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 4 }}>

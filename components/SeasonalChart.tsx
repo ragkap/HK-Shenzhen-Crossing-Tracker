@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { FIRST_OF_MONTH, monthDayLabel, type SeasonalRow } from "@/lib/aggregate";
 import ChartExportFooter from "./ChartExportFooter";
+import ChartHeader from "./ChartHeader";
 
 const YEAR_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#4a3aa7", "#008300", "#e34948"];
 
@@ -26,6 +27,9 @@ export default function SeasonalChart({
   topLabel,
   bottomLabel,
   filename,
+  title,
+  subtitle,
+  action,
 }: {
   rows: SeasonalRow[];
   years: number[];
@@ -35,11 +39,15 @@ export default function SeasonalChart({
   topLabel?: string;
   bottomLabel?: string;
   filename: string;
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
 }) {
   const captureRef = useRef<HTMLDivElement>(null);
 
   return (
     <div ref={captureRef} style={{ width: "100%" }}>
+      <ChartHeader title={title} subtitle={subtitle} action={action} />
       <div style={{ width: "100%", height: 440, position: "relative" }}>
         {topLabel && (
           <div

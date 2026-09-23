@@ -16,6 +16,7 @@ import {
 import { formatDateShort } from "@/lib/aggregate";
 import { HOLIDAYS } from "@/lib/holidays";
 import ChartExportFooter from "./ChartExportFooter";
+import ChartHeader from "./ChartHeader";
 
 type Point = {
   date: string;
@@ -26,9 +27,13 @@ type Point = {
 export default function NetFlowChart({
   data,
   window,
+  title,
+  subtitle,
 }: {
   data: Point[];
   window: number;
+  title: string;
+  subtitle?: string;
 }) {
   const captureRef = useRef<HTMLDivElement>(null);
   const first = data[0]?.date;
@@ -37,16 +42,25 @@ export default function NetFlowChart({
     (h) => first && last && h.end >= first && h.start <= last
   );
 
-  // Keep zero vertically centered even when every value sits on one side of
-  // it, so "better for HK" / "better for Shenzhen" headroom is always visible.
+  // Fit the axis to the actual data range (not forced symmetric around
+  // zero) so the line uses the full plot height instead of being squished
+  // into a sliver when net sits mostly on one side of zero.
   const yDomain = useMemo<[number, number]>(() => {
-    const maxAbs = data.reduce((m, p) => Math.max(m, Math.abs(p.net), Math.abs(p.netTrend)), 0);
-    const padded = maxAbs * 1.15 || 1;
-    return [-padded, padded];
+    let min = Infinity;
+    let max = -Infinity;
+    for (const p of data) {
+      min = Math.min(min, p.net, p.netTrend);
+      max = Math.max(max, p.net, p.netTrend);
+    }
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return [-1, 1];
+    const span = max - min || Math.abs(max) || 1;
+    const pad = span * 0.12;
+    return [min - pad, max + pad];
   }, [data]);
 
   return (
     <div ref={captureRef} style={{ width: "100%" }}>
+      <ChartHeader title={title} subtitle={subtitle} />
       <div style={{ width: "100%", height: 480, position: "relative" }}>
         <div
           style={{
@@ -59,7 +73,7 @@ export default function NetFlowChart({
             pointerEvents: "none",
           }}
         >
-          &uarr; Better for HK &mdash; more arriving than leaving
+          &uarr; Better for HK
         </div>
         <div
           style={{
@@ -72,7 +86,7 @@ export default function NetFlowChart({
             pointerEvents: "none",
           }}
         >
-          &darr; Better for Shenzhen &mdash; more leaving than arriving
+          &darr; Better for Shenzhen
         </div>
         <ResponsiveContainer>
           <ComposedChart data={data} margin={{ top: 24, right: 8, left: 4, bottom: 20 }}>

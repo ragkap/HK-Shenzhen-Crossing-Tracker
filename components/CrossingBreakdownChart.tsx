@@ -4,17 +4,24 @@ import { useRef } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { formatDateShort } from "@/lib/aggregate";
 import ChartExportFooter from "./ChartExportFooter";
+import ChartHeader from "./ChartHeader";
 
 export default function CrossingBreakdownChart({
   dates,
   series,
   window,
   filename,
+  title,
+  subtitle,
+  action,
 }: {
   dates: string[];
   series: { name: string; color: string; values: number[] }[];
   window: number;
   filename: string;
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
 }) {
   const captureRef = useRef<HTMLDivElement>(null);
   const data = dates.map((date, i) => {
@@ -25,6 +32,7 @@ export default function CrossingBreakdownChart({
 
   return (
     <div ref={captureRef} style={{ width: "100%" }}>
+      <ChartHeader title={title} subtitle={subtitle} action={action} />
       <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 8, right: 16, left: 4, bottom: 4 }}>

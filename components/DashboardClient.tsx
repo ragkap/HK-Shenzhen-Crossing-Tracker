@@ -69,10 +69,12 @@ function Checkbox({
   checked,
   onChange,
   label,
+  info,
 }: {
   checked: boolean;
   onChange: () => void;
   label: string;
+  info?: string;
 }) {
   return (
     <label
@@ -87,6 +89,29 @@ function Checkbox({
     >
       <input type="checkbox" checked={checked} onChange={onChange} style={{ accentColor: "var(--accent)" }} />
       {label}
+      {info && (
+        <span
+          title={info}
+          tabIndex={0}
+          aria-label={info}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 14,
+            height: 14,
+            borderRadius: "50%",
+            border: "1px solid var(--border)",
+            color: "var(--text-muted)",
+            fontSize: 10,
+            fontWeight: 600,
+            cursor: "help",
+            flexShrink: 0,
+          }}
+        >
+          i
+        </span>
+      )}
     </label>
   );
 }
@@ -207,7 +232,10 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
     <div style={{ maxWidth: 1080, margin: "0 auto", padding: "32px 20px 64px" }}>
       <header style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 1, color: "var(--accent)", textTransform: "uppercase" }}>
-          HK &harr; Shenzhen crossing tracker
+          <span style={{ marginRight: 4 }}>🇭🇰</span>
+          HK &harr; Shenzhen
+          <span style={{ marginLeft: 4, marginRight: 4 }}>🇨🇳</span>
+          crossing tracker
         </div>
         <h1 style={{ fontSize: 28, fontWeight: 500, margin: "6px 0 6px", letterSpacing: -0.5 }}>
           Southbound &amp; northbound passenger traffic
@@ -235,8 +263,18 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
           ))}
         </div>
         <div style={{ display: "flex", gap: 14, marginLeft: "auto" }}>
-          <Checkbox checked={includeRail} onChange={() => setIncludeRail((v) => !v)} label="Include Express Rail Link" />
-          <Checkbox checked={includeBridge} onChange={() => setIncludeBridge((v) => !v)} label="Include HZMB" />
+          <Checkbox
+            checked={includeRail}
+            onChange={() => setIncludeRail((v) => !v)}
+            label="Include Express Rail Link"
+            info="The high-speed rail terminus at West Kowloon, running to Shenzhenbei and onward into mainland China. Included by default alongside the land crossings."
+          />
+          <Checkbox
+            checked={includeBridge}
+            onChange={() => setIncludeBridge((v) => !v)}
+            label="Include HZMB"
+            info="Hong Kong–Zhuhai–Macao Bridge. Traffic here mostly heads to Zhuhai and Macau, not Shenzhen, so it's excluded by default to keep the totals Shenzhen-specific."
+          />
         </div>
       </section>
 
@@ -261,91 +299,94 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
         />
       </section>
 
-      <Card
-        title="Net flow"
-        subtitle={`${avgWindow}-day rolling average, ${
-          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
-        }. Southbound minus northbound.`}
-      >
-        <NetFlowChart data={chartData} window={avgWindow} />
+      <Card hideHeader>
+        <NetFlowChart
+          data={chartData}
+          window={avgWindow}
+          title="Net flow"
+          subtitle={`${avgWindow}-day rolling average, ${
+            rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
+          }. Southbound minus northbound.`}
+        />
       </Card>
 
-      <Card
-        title="Net flow — seasonal by year"
-        subtitle="Net (southbound minus northbound), one line per calendar year, so seasonal swings can be compared year over year."
-      >
+      <Card hideHeader>
         <SeasonalChart
           rows={netSeasonal.rows}
           years={netSeasonal.years}
           metricLabel="Net"
           window={avgWindow}
           zeroReference
-          topLabel="↑ Better for HK — more arriving than leaving"
-          bottomLabel="↓ Better for Shenzhen — more leaving than arriving"
+          topLabel="↑ Better for HK"
+          bottomLabel="↓ Better for Shenzhen"
           filename={`hk-shenzhen-net-flow-seasonal-${avgWindow}d`}
+          title="Net flow — seasonal by year"
+          subtitle="Net (southbound minus northbound), one line per calendar year, so seasonal swings can be compared year over year."
         />
       </Card>
 
-      <Card
-        title="Trend"
-        subtitle={`${avgWindow}-day rolling average, ${
-          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
-        }. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
-      >
-        <TrendChart data={chartData} window={avgWindow} />
+      <Card hideHeader>
+        <TrendChart
+          data={chartData}
+          window={avgWindow}
+          title="Trend"
+          subtitle={`${avgWindow}-day rolling average, ${
+            rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
+          }. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
+        />
       </Card>
 
-      <Card
-        title="Trend — seasonal by year"
-        subtitle="One line per calendar year, so seasonal swings can be compared year over year."
-        action={
-          <div style={{ display: "flex", gap: 6 }}>
-            <ToggleButton active={seasonalFlow === "southbound"} onClick={() => setSeasonalFlow("southbound")}>
-              Southbound
-            </ToggleButton>
-            <ToggleButton active={seasonalFlow === "northbound"} onClick={() => setSeasonalFlow("northbound")}>
-              Northbound
-            </ToggleButton>
-          </div>
-        }
-      >
+      <Card hideHeader>
         <SeasonalChart
           rows={seasonalFlow === "southbound" ? southboundSeasonal.rows : northboundSeasonal.rows}
           years={seasonalFlow === "southbound" ? southboundSeasonal.years : northboundSeasonal.years}
           metricLabel={seasonalFlow === "southbound" ? "Southbound" : "Northbound"}
           window={avgWindow}
           filename={`hk-shenzhen-trend-seasonal-${seasonalFlow}-${avgWindow}d`}
+          title="Trend — seasonal by year"
+          subtitle="One line per calendar year, so seasonal swings can be compared year over year."
+          action={
+            <div style={{ display: "flex", gap: 6 }}>
+              <ToggleButton active={seasonalFlow === "southbound"} onClick={() => setSeasonalFlow("southbound")}>
+                Southbound
+              </ToggleButton>
+              <ToggleButton active={seasonalFlow === "northbound"} onClick={() => setSeasonalFlow("northbound")}>
+                Northbound
+              </ToggleButton>
+            </div>
+          }
         />
       </Card>
 
-      <Card
-        title="By crossing point"
-        subtitle="Lo Wu and Lok Ma Chau feed Sheung Shui; Shenzhen Bay and Heung Yuen Wai lean toward HK residents heading north."
-        action={
-          <div style={{ display: "flex", gap: 6 }}>
-            <ToggleButton active={breakdownFlow === "southbound"} onClick={() => setBreakdownFlow("southbound")}>
-              Southbound
-            </ToggleButton>
-            <ToggleButton active={breakdownFlow === "northbound"} onClick={() => setBreakdownFlow("northbound")}>
-              Northbound
-            </ToggleButton>
-          </div>
-        }
-      >
+      <Card hideHeader>
         <CrossingBreakdownChart
           dates={breakdownDates}
           series={breakdownSeries}
           window={avgWindow}
           filename={`hk-shenzhen-by-crossing-${breakdownFlow}-${avgWindow}d`}
+          title="By crossing point"
+          subtitle="Lo Wu and Lok Ma Chau feed Sheung Shui; Shenzhen Bay and Heung Yuen Wai lean toward HK residents heading north."
+          action={
+            <div style={{ display: "flex", gap: 6 }}>
+              <ToggleButton active={breakdownFlow === "southbound"} onClick={() => setBreakdownFlow("southbound")}>
+                Southbound
+              </ToggleButton>
+              <ToggleButton active={breakdownFlow === "northbound"} onClick={() => setBreakdownFlow("northbound")}>
+                Northbound
+              </ToggleButton>
+            </div>
+          }
         />
       </Card>
 
-      <Card title="Sheung Shui feed vs. resident-leaning crossings" subtitle={`${breakdownFlow === "southbound" ? "Southbound" : "Northbound"}, ${avgWindow}-day rolling average.`}>
+      <Card hideHeader>
         <CrossingBreakdownChart
           dates={breakdownDates}
           series={groupSeries}
           window={avgWindow}
           filename={`hk-shenzhen-crossing-groups-${breakdownFlow}-${avgWindow}d`}
+          title="Sheung Shui feed vs. resident-leaning crossings"
+          subtitle={`${breakdownFlow === "southbound" ? "Southbound" : "Northbound"}, ${avgWindow}-day rolling average.`}
         />
       </Card>
 
@@ -373,11 +414,13 @@ function Card({
   title,
   subtitle,
   action,
+  hideHeader = false,
   children,
 }: {
-  title: string;
+  title?: string;
   subtitle?: string;
   action?: React.ReactNode;
+  hideHeader?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -391,14 +434,16 @@ function Card({
         marginBottom: 20,
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
-        <div>
-          <h2 style={{ fontSize: 16, fontWeight: 500, margin: 0 }}>{title}</h2>
-          {subtitle && <p style={{ fontSize: 12.5, color: "var(--text-muted)", margin: "4px 0 0", maxWidth: 640 }}>{subtitle}</p>}
+      {!hideHeader && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
+          <div>
+            <h2 style={{ fontSize: 16, fontWeight: 500, margin: 0 }}>{title}</h2>
+            {subtitle && <p style={{ fontSize: 12.5, color: "var(--text-muted)", margin: "4px 0 0", maxWidth: 640 }}>{subtitle}</p>}
+          </div>
+          {action}
         </div>
-        {action}
-      </div>
-      <div style={{ marginTop: 12 }}>{children}</div>
+      )}
+      <div style={{ marginTop: hideHeader ? 0 : 12 }}>{children}</div>
     </div>
   );
 }
