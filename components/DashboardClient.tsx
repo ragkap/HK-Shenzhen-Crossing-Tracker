@@ -271,15 +271,6 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
       </Card>
 
       <Card
-        title="Trend"
-        subtitle={`${avgWindow}-day rolling average, ${
-          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
-        }. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
-      >
-        <TrendChart data={chartData} window={avgWindow} />
-      </Card>
-
-      <Card
         title="Net flow — seasonal by year"
         subtitle="Net (southbound minus northbound), one line per calendar year, so seasonal swings can be compared year over year."
       >
@@ -293,6 +284,15 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
           bottomLabel="↓ Better for Shenzhen — more leaving than arriving"
           filename={`hk-shenzhen-net-flow-seasonal-${avgWindow}d`}
         />
+      </Card>
+
+      <Card
+        title="Trend"
+        subtitle={`${avgWindow}-day rolling average, ${
+          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
+        }. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
+      >
+        <TrendChart data={chartData} window={avgWindow} />
       </Card>
 
       <Card
