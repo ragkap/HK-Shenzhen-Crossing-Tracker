@@ -3,6 +3,10 @@ import { TRACKED_CROSSINGS } from "./crossings";
 const CSV_URL =
   "https://www.immd.gov.hk/opendata/eng/transport/immigration_clearance/statistics_on_daily_passenger_traffic.csv";
 
+// 2021-2022 border-closure traffic is near zero and swamps every chart's
+// scale/seasonal comparison, so the app only tracks 2023 onward.
+const DATA_START_DATE = "2023-01-01";
+
 export type DailyRow = {
   date: string; // YYYY-MM-DD
   crossing: string;
@@ -44,6 +48,7 @@ export async function fetchDailyRows(): Promise<{
     if (!tracked.has(crossing)) continue;
 
     const date = toISO(dateRaw);
+    if (date < DATA_START_DATE) continue;
     if (date > asOf) asOf = date;
 
     const key = `${date}__${crossing}`;
