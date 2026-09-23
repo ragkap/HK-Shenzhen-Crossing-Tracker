@@ -90,26 +90,28 @@ function Checkbox({
       <input type="checkbox" checked={checked} onChange={onChange} style={{ accentColor: "var(--accent)" }} />
       {label}
       {info && (
-        <span
-          title={info}
-          tabIndex={0}
-          aria-label={info}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 14,
-            height: 14,
-            borderRadius: "50%",
-            border: "1px solid var(--border)",
-            color: "var(--text-muted)",
-            fontSize: 10,
-            fontWeight: 600,
-            cursor: "help",
-            flexShrink: 0,
-          }}
-        >
-          i
+        <span className="info-tip">
+          <span
+            tabIndex={0}
+            aria-label={info}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              border: "1px solid var(--border)",
+              color: "var(--text-muted)",
+              fontSize: 10,
+              fontWeight: 600,
+              cursor: "help",
+              flexShrink: 0,
+            }}
+          >
+            i
+          </span>
+          <span className="info-tip-bubble">{info}</span>
         </span>
       )}
     </label>
@@ -406,9 +408,18 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
         </a>
         . Holiday windows are hand-curated and approximate — verify against the official gazette before relying on them.
         <br />
-        Disclaimer: Smartkarma makes no assurance about the accuracy of the generated data and
-        results. Data is indicative only and should be independently checked for accuracy and
-        confirmed before use.
+        Disclaimer:{" "}
+        <a
+          href="https://www.smartkarma.com"
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: "var(--text-muted)", textDecoration: "underline" }}
+        >
+          Smartkarma
+        </a>{" "}
+        makes no assurance about the accuracy of the generated data and results. Data is
+        indicative only and should be independently checked for accuracy and confirmed before
+        use.
       </footer>
     </div>
   );
