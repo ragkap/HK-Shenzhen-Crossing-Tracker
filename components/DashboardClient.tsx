@@ -329,7 +329,7 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
         <TrendChart
           data={chartData}
           window={avgWindow}
-          title="Trend"
+          title="Southbound and Northbound Trend"
           subtitle={`${avgWindow}-day rolling average, ${
             rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
           }. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
@@ -343,7 +343,7 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
           metricLabel={seasonalFlow === "southbound" ? "Southbound" : "Northbound"}
           window={avgWindow}
           filename={`hk-shenzhen-trend-seasonal-${seasonalFlow}-${avgWindow}d`}
-          title="Trend — seasonal by year"
+          title="Southbound and Northbound Trend — seasonal by year"
           subtitle="One line per calendar year, so seasonal swings can be compared year over year."
           action={
             <div style={{ display: "flex", gap: 6 }}>
