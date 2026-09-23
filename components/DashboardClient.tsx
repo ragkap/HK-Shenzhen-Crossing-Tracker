@@ -20,6 +20,7 @@ import {
 } from "@/lib/crossings";
 import StatCard from "./StatCard";
 import TrendChart from "./TrendChart";
+import NetFlowChart from "./NetFlowChart";
 import CrossingBreakdownChart from "./CrossingBreakdownChart";
 import DataTable from "./DataTable";
 
@@ -252,6 +253,15 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
         }. Shaded bands are moving holidays — read year-on-year jumps with these in mind.`}
       >
         <TrendChart data={chartData} window={avgWindow} />
+      </Card>
+
+      <Card
+        title="Net flow"
+        subtitle={`${avgWindow}-day rolling average, ${
+          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
+        }. Southbound minus northbound.`}
+      >
+        <NetFlowChart data={chartData} window={avgWindow} />
       </Card>
 
       <Card

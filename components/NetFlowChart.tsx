@@ -4,25 +4,27 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
   ReferenceArea,
+  ReferenceLine,
 } from "recharts";
 import { formatDateShort } from "@/lib/aggregate";
 import { HOLIDAYS } from "@/lib/holidays";
 
 type Point = {
   date: string;
-  southbound: number;
-  northbound: number;
-  southboundTrend: number;
-  northboundTrend: number;
+  net: number;
+  netTrend: number;
+  netInflow: number;
+  netOutflow: number;
 };
 
-export default function TrendChart({
+export default function NetFlowChart({
   data,
   window,
 }: {
@@ -37,9 +39,35 @@ export default function TrendChart({
 
   return (
     <div style={{ width: "100%" }}>
-      <div style={{ width: "100%", height: 480 }}>
+      <div style={{ width: "100%", height: 360, position: "relative" }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 4,
+            left: 60,
+            fontSize: 11,
+            fontWeight: 500,
+            color: "var(--net-inflow)",
+            pointerEvents: "none",
+          }}
+        >
+          &uarr; Better for HK &mdash; more arriving than leaving
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 28,
+            left: 60,
+            fontSize: 11,
+            fontWeight: 500,
+            color: "var(--net-outflow)",
+            pointerEvents: "none",
+          }}
+        >
+          &darr; Better for Shenzhen &mdash; more leaving than arriving
+        </div>
         <ResponsiveContainer>
-          <ComposedChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 4 }}>
+          <ComposedChart data={data} margin={{ top: 24, right: 8, left: 4, bottom: 20 }}>
             <CartesianGrid stroke="var(--gridline)" vertical={false} />
             {visibleHolidays.map((h) => (
               <ReferenceArea
@@ -63,12 +91,6 @@ export default function TrendChart({
               tick={{ fill: "var(--text-muted)", fontSize: 11 }}
               width={56}
               tickFormatter={(v) => (Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)}
-              label={{
-                value: "People / day",
-                angle: -90,
-                position: "insideLeft",
-                style: { fill: "var(--text-muted)", fontSize: 11 },
-              }}
             />
             <Tooltip
               contentStyle={{
@@ -85,39 +107,42 @@ export default function TrendChart({
               ]}
             />
             <Legend wrapperStyle={{ fontSize: 11.5, color: "var(--text-secondary)" }} />
-            <Line
+            <ReferenceLine y={0} stroke="var(--baseline)" strokeWidth={1} />
+            <Area
               type="monotone"
-              dataKey="southbound"
-              name={`Southbound (${window}d avg)`}
-              stroke="var(--southbound)"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="southboundTrend"
-              name="Southbound trend"
-              stroke="var(--southbound)"
-              strokeWidth={1.5}
-              strokeOpacity={0.6}
-              strokeDasharray="1 5"
-              strokeLinecap="round"
-              dot={false}
+              dataKey="netInflow"
+              legendType="none"
+              stroke="none"
+              fill="var(--net-inflow)"
+              fillOpacity={0.16}
+              baseValue={0}
               isAnimationActive={false}
+              tooltipType="none"
+            />
+            <Area
+              type="monotone"
+              dataKey="netOutflow"
+              legendType="none"
+              stroke="none"
+              fill="var(--net-outflow)"
+              fillOpacity={0.16}
+              baseValue={0}
+              isAnimationActive={false}
+              tooltipType="none"
             />
             <Line
               type="monotone"
-              dataKey="northbound"
-              name={`Northbound (${window}d avg)`}
-              stroke="var(--northbound)"
+              dataKey="net"
+              name={`Net, southbound − northbound (${window}d avg)`}
+              stroke="var(--net)"
               strokeWidth={2}
               dot={false}
             />
             <Line
               type="monotone"
-              dataKey="northboundTrend"
-              name="Northbound trend"
-              stroke="var(--northbound)"
+              dataKey="netTrend"
+              name="Net trend"
+              stroke="var(--net)"
               strokeWidth={1.5}
               strokeOpacity={0.6}
               strokeDasharray="1 5"
@@ -129,7 +154,9 @@ export default function TrendChart({
         </ResponsiveContainer>
       </div>
       <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "8px 2px 0", lineHeight: 1.5 }}>
-        Dotted lines are the straight-line trend over the selected range.
+        Net = southbound minus northbound. Above zero, more people are entering HK than leaving it
+        &mdash; good for HK footfall. Below zero, more residents are leaving for Shenzhen than
+        visitors are arriving.
       </p>
     </div>
   );
