@@ -41,8 +41,8 @@ export default function TrendChart({
   );
 
   return (
-    <div style={{ width: "100%", maxWidth: 640, margin: "0 auto" }}>
-      <div style={{ width: "100%", height: 460 }}>
+    <div style={{ width: "100%" }}>
+      <div style={{ width: "100%", height: 560 }}>
         <ResponsiveContainer>
           <ComposedChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 4 }}>
             <CartesianGrid stroke="var(--gridline)" vertical={false} />
