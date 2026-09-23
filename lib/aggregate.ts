@@ -86,67 +86,27 @@ export function formatDateShort(iso: string): string {
 }
 
 // Ordinary least squares fit of values against their index; returns the
-// fitted (trend) value at each index. Kept as the degree-1 case of
-// polynomialTrend below.
+// fitted (trend) value at each index. Used to draw a straight trendline
+// over whatever range is currently on screen.
 export function linearTrend(values: number[]): number[] {
-  return polynomialTrend(values, 1);
-}
-
-// Gaussian elimination with partial pivoting, for the small (degree+1)^2
-// systems polynomialTrend solves.
-function solveLinearSystem(A: number[][], b: number[]): number[] {
-  const n = b.length;
-  const M = A.map((row, i) => [...row, b[i]]);
-  for (let col = 0; col < n; col++) {
-    let pivot = col;
-    for (let r = col + 1; r < n; r++) {
-      if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
-    }
-    [M[col], M[pivot]] = [M[pivot], M[col]];
-    if (Math.abs(M[col][col]) < 1e-12) continue; // singular-ish; leave row, coefficient falls out as 0
-    for (let r = 0; r < n; r++) {
-      if (r === col) continue;
-      const factor = M[r][col] / M[col][col];
-      for (let c = col; c <= n; c++) M[r][c] -= factor * M[col][c];
-    }
-  }
-  return M.map((row, i) => (Math.abs(row[i]) < 1e-12 ? 0 : row[n] / row[i]));
-}
-
-// Least-squares polynomial fit of `values` against their index, evaluated
-// back at every index — a curved trendline (degree 2 = one inflection
-// point) instead of a straight line. x is centered on the series midpoint
-// before fitting to keep the normal-equations matrix well-conditioned over
-// long (multi-year) ranges.
-export function polynomialTrend(values: number[], degree = 2): number[] {
   const n = values.length;
   if (n === 0) return [];
-  if (n <= degree) return values.slice();
+  if (n === 1) return [values[0]];
 
-  const mean = (n - 1) / 2;
-  const xs = values.map((_, i) => i - mean);
-  const terms = degree + 1;
-
-  const powerSums = new Array(2 * degree + 1).fill(0);
-  for (const x of xs) {
-    let p = 1;
-    for (let k = 0; k <= 2 * degree; k++) {
-      powerSums[k] += p;
-      p *= x;
-    }
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumXX = 0;
+  for (let i = 0; i < n; i++) {
+    sumX += i;
+    sumY += values[i];
+    sumXY += i * values[i];
+    sumXX += i * i;
   }
-
-  const A: number[][] = Array.from({ length: terms }, () => new Array(terms).fill(0));
-  const b: number[] = new Array(terms).fill(0);
-  for (let k = 0; k < terms; k++) {
-    for (let j = 0; j < terms; j++) A[k][j] = powerSums[k + j];
-    let s = 0;
-    for (let i = 0; i < n; i++) s += Math.pow(xs[i], k) * values[i];
-    b[k] = s;
-  }
-
-  const coeffs = solveLinearSystem(A, b);
-  return xs.map((x) => coeffs.reduce((acc, c, k) => acc + c * Math.pow(x, k), 0));
+  const denom = n * sumXX - sumX * sumX;
+  const slope = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+  return values.map((_, i) => intercept + slope * i);
 }
 
 // All "MM-DD" calendar positions Jan 1 -> Dec 31, including Feb 29 so leap

@@ -42,11 +42,10 @@ export default function NetFlowChart({
     (h) => first && last && h.end >= first && h.start <= last
   );
 
-  // The trend curve can inflect, so color by its direction at the most
-  // recent point (not first-vs-last), which is what "is it currently
-  // improving" actually means once the fit isn't a straight line.
+  // Trend is a straight line, so its sign is just the direction from first
+  // to last point: rising means net is moving toward inflow (good for HK).
   const isImproving =
-    data.length >= 2 && data[data.length - 1].netTrend > data[data.length - 2].netTrend;
+    data.length >= 2 && data[data.length - 1].netTrend > data[0].netTrend;
   const trendColor = isImproving ? "var(--net-inflow)" : "var(--net-outflow)";
 
   // Fit the axis to the actual data range (not forced symmetric around
@@ -163,9 +162,7 @@ export default function NetFlowChart({
       <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "8px 2px 0", lineHeight: 1.5 }}>
         Net = southbound minus northbound. Above zero, more people are entering HK than leaving it
         &mdash; good for HK footfall. Below zero, more residents are leaving for Shenzhen than
-        visitors are arriving. Dashed line is a curved (quadratic) trend fit over the selected
-        range, so it can bend where the pattern genuinely inflects rather than forcing a straight
-        average slope.
+        visitors are arriving. Dashed line is the straight-line trend over the selected range.
       </p>
       <ChartExportFooter
         source="Hong Kong Immigration Department"

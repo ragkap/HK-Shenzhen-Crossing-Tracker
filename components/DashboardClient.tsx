@@ -7,7 +7,7 @@ import {
   rollingAverage,
   shiftedSeries,
   pctChange,
-  polynomialTrend,
+  linearTrend,
   buildSeasonalRows,
   YOY_OFFSET_DAYS,
 } from "@/lib/aggregate";
@@ -148,9 +148,9 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
     const southboundSlice = southboundMA.slice(chartStart);
     const northboundSlice = northboundMA.slice(chartStart);
     const netSlice = southboundSlice.map((v, i) => v - northboundSlice[i]);
-    const southboundTrend = polynomialTrend(southboundSlice, 2);
-    const northboundTrend = polynomialTrend(northboundSlice, 2);
-    const netTrend = polynomialTrend(netSlice, 2);
+    const southboundTrend = linearTrend(southboundSlice);
+    const northboundTrend = linearTrend(northboundSlice);
+    const netTrend = linearTrend(netSlice);
     return totals.dates.slice(chartStart).map((date, i) => ({
       date,
       southbound: southboundSlice[i],
