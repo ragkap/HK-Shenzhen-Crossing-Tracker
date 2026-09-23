@@ -8,6 +8,7 @@ import {
   shiftedSeries,
   pctChange,
   linearTrend,
+  buildSeasonalRows,
   YOY_OFFSET_DAYS,
 } from "@/lib/aggregate";
 import {
@@ -21,6 +22,7 @@ import {
 import StatCard from "./StatCard";
 import TrendChart from "./TrendChart";
 import NetFlowChart from "./NetFlowChart";
+import SeasonalChart from "./SeasonalChart";
 import CrossingBreakdownChart from "./CrossingBreakdownChart";
 import DataTable from "./DataTable";
 
@@ -94,6 +96,7 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
   const [includeRail, setIncludeRail] = useState(true);
   const [includeBridge, setIncludeBridge] = useState(false);
   const [breakdownFlow, setBreakdownFlow] = useState<"southbound" | "northbound">("northbound");
+  const [seasonalFlow, setSeasonalFlow] = useState<"southbound" | "northbound">("northbound");
   const [rangeDays, setRangeDays] = useState(365);
 
   const included = useMemo(() => {
@@ -121,51 +124,33 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
     const southboundTrend = linearTrend(southboundSlice);
     const northboundTrend = linearTrend(northboundSlice);
     const netTrend = linearTrend(netSlice);
-    return totals.dates.slice(chartStart).map((date, i) => {
-      const net = netSlice[i];
-      return {
-        date,
-        southbound: southboundSlice[i],
-        northbound: northboundSlice[i],
-        southboundTrend: southboundTrend[i],
-        northboundTrend: northboundTrend[i],
-        net,
-        netTrend: netTrend[i],
-        netInflow: net >= 0 ? net : 0,
-        netOutflow: net < 0 ? net : 0,
-      };
-    });
+    return totals.dates.slice(chartStart).map((date, i) => ({
+      date,
+      southbound: southboundSlice[i],
+      northbound: northboundSlice[i],
+      southboundTrend: southboundTrend[i],
+      northboundTrend: northboundTrend[i],
+      net: netSlice[i],
+      netTrend: netTrend[i],
+    }));
   }, [totals.dates, southboundMA, northboundMA, chartStart]);
 
-  // Annual seasonally-adjusted view: a 365-day trailing average of the raw
-  // daily totals averages out weekly and annual (holiday/Golden Week)
-  // seasonality by construction, leaving the underlying level/trend.
-  const SEASONAL_WINDOW = 365;
-  const southboundSA = useMemo(() => rollingAverage(totals.southbound, SEASONAL_WINDOW), [totals]);
-  const northboundSA = useMemo(() => rollingAverage(totals.northbound, SEASONAL_WINDOW), [totals]);
-
-  const saChartData = useMemo(() => {
-    const southboundSlice = southboundSA.slice(chartStart);
-    const northboundSlice = northboundSA.slice(chartStart);
-    const netSlice = southboundSlice.map((v, i) => v - northboundSlice[i]);
-    const southboundTrend = linearTrend(southboundSlice);
-    const northboundTrend = linearTrend(northboundSlice);
-    const netTrend = linearTrend(netSlice);
-    return totals.dates.slice(chartStart).map((date, i) => {
-      const net = netSlice[i];
-      return {
-        date,
-        southbound: southboundSlice[i],
-        northbound: northboundSlice[i],
-        southboundTrend: southboundTrend[i],
-        northboundTrend: northboundTrend[i],
-        net,
-        netTrend: netTrend[i],
-        netInflow: net >= 0 ? net : 0,
-        netOutflow: net < 0 ? net : 0,
-      };
-    });
-  }, [totals.dates, southboundSA, northboundSA, chartStart]);
+  // Seasonal view: reshape each flow into one line per calendar year
+  // (Jan 1 -> Dec 31) so Chinese New Year, Golden Week etc. line up across
+  // years for direct comparison, independent of the selected date range.
+  const southboundSeasonal = useMemo(
+    () => buildSeasonalRows(totals.dates, southboundMA),
+    [totals.dates, southboundMA]
+  );
+  const northboundSeasonal = useMemo(
+    () => buildSeasonalRows(totals.dates, northboundMA),
+    [totals.dates, northboundMA]
+  );
+  const netFull = useMemo(
+    () => southboundMA.map((v, i) => v - northboundMA[i]),
+    [southboundMA, northboundMA]
+  );
+  const netSeasonal = useMemo(() => buildSeasonalRows(totals.dates, netFull), [totals.dates, netFull]);
 
   const breakdownCrossings = includeBridge
     ? [...SHENZHEN_LAND_CROSSINGS, EXPRESS_RAIL, HZMB]
@@ -295,21 +280,42 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
       </Card>
 
       <Card
-        title="Net flow — seasonally adjusted"
-        subtitle={`365-day trailing average, ${
-          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
-        }. Averaging a full year smooths out weekly and annual seasonality (weekends, Golden Week, CNY), leaving the underlying level.`}
+        title="Net flow — seasonal by year"
+        subtitle="Net (southbound minus northbound), one line per calendar year, so seasonal swings can be compared year over year."
       >
-        <NetFlowChart data={saChartData} window={SEASONAL_WINDOW} />
+        <SeasonalChart
+          rows={netSeasonal.rows}
+          years={netSeasonal.years}
+          metricLabel="Net"
+          window={avgWindow}
+          zeroReference
+          topLabel="↑ Better for HK — more arriving than leaving"
+          bottomLabel="↓ Better for Shenzhen — more leaving than arriving"
+          filename={`hk-shenzhen-net-flow-seasonal-${avgWindow}d`}
+        />
       </Card>
 
       <Card
-        title="Trend — seasonally adjusted"
-        subtitle={`365-day trailing average, ${
-          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
-        }. Same seasonal smoothing applied to southbound and northbound individually.`}
+        title="Trend — seasonal by year"
+        subtitle="One line per calendar year, so seasonal swings can be compared year over year."
+        action={
+          <div style={{ display: "flex", gap: 6 }}>
+            <ToggleButton active={seasonalFlow === "southbound"} onClick={() => setSeasonalFlow("southbound")}>
+              Southbound
+            </ToggleButton>
+            <ToggleButton active={seasonalFlow === "northbound"} onClick={() => setSeasonalFlow("northbound")}>
+              Northbound
+            </ToggleButton>
+          </div>
+        }
       >
-        <TrendChart data={saChartData} window={SEASONAL_WINDOW} />
+        <SeasonalChart
+          rows={seasonalFlow === "southbound" ? southboundSeasonal.rows : northboundSeasonal.rows}
+          years={seasonalFlow === "southbound" ? southboundSeasonal.years : northboundSeasonal.years}
+          metricLabel={seasonalFlow === "southbound" ? "Southbound" : "Northbound"}
+          window={avgWindow}
+          filename={`hk-shenzhen-trend-seasonal-${seasonalFlow}-${avgWindow}d`}
+        />
       </Card>
 
       <Card

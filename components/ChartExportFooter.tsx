@@ -90,22 +90,14 @@ export default function ChartExportFooter({
             color: "var(--text-secondary)",
           }}
         >
-          <span
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: 4,
-              background: "#161b22",
-              color: "var(--accent)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 10,
-              lineHeight: 1,
-            }}
-          >
-            ✦
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/smartkarma-mark.png"
+            alt=""
+            width={16}
+            height={16}
+            style={{ display: "block", borderRadius: 3 }}
+          />
           Smartkarma Analytics
         </span>
       </span>

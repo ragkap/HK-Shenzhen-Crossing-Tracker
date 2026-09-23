@@ -108,3 +108,60 @@ export function linearTrend(values: number[]): number[] {
   const intercept = (sumY - slope * sumX) / n;
   return values.map((_, i) => intercept + slope * i);
 }
+
+// All "MM-DD" calendar positions Jan 1 -> Dec 31, including Feb 29 so leap
+// years have a slot (non-leap years just leave it null).
+export const CALENDAR_MONTH_DAYS: string[] = (() => {
+  const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const out: string[] = [];
+  daysInMonth.forEach((days, m) => {
+    for (let d = 1; d <= days; d++) {
+      out.push(`${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+    }
+  });
+  return out;
+})();
+
+export const FIRST_OF_MONTH = CALENDAR_MONTH_DAYS.filter((md) => md.endsWith("-01"));
+
+const MONTH_ABBR = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+export function monthDayLabel(monthDay: string): string {
+  const month = Number(monthDay.slice(0, 2));
+  return MONTH_ABBR[month - 1] ?? monthDay;
+}
+
+// Reshapes a daily series into one row per calendar day (Jan 1 -> Dec 31),
+// with one column per year present in the data — a "seasonal" layout where
+// every year's line can be plotted on the same Jan-Dec x-axis for direct
+// year-over-year comparison.
+export type SeasonalRow = { monthDay: string } & Record<string, string | number | null>;
+
+export function buildSeasonalRows(
+  dates: string[],
+  values: number[]
+): { years: number[]; rows: SeasonalRow[] } {
+  const byYear = new Map<number, Map<string, number>>();
+  const yearSet = new Set<number>();
+
+  dates.forEach((date, i) => {
+    const year = Number(date.slice(0, 4));
+    const monthDay = date.slice(5);
+    yearSet.add(year);
+    if (!byYear.has(year)) byYear.set(year, new Map());
+    byYear.get(year)!.set(monthDay, values[i]);
+  });
+
+  const years = Array.from(yearSet).sort((a, b) => a - b);
+  const rows: SeasonalRow[] = CALENDAR_MONTH_DAYS.map((monthDay) => {
+    const row: SeasonalRow = { monthDay };
+    for (const y of years) {
+      row[String(y)] = byYear.get(y)?.get(monthDay) ?? null;
+    }
+    return row;
+  });
+
+  return { years, rows };
+}

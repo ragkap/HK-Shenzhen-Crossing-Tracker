@@ -1,11 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
   Line,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -22,8 +21,6 @@ type Point = {
   date: string;
   net: number;
   netTrend: number;
-  netInflow: number;
-  netOutflow: number;
 };
 
 export default function NetFlowChart({
@@ -39,6 +36,14 @@ export default function NetFlowChart({
   const visibleHolidays = HOLIDAYS.filter(
     (h) => first && last && h.end >= first && h.start <= last
   );
+
+  // Keep zero vertically centered even when every value sits on one side of
+  // it, so "better for HK" / "better for Shenzhen" headroom is always visible.
+  const yDomain = useMemo<[number, number]>(() => {
+    const maxAbs = data.reduce((m, p) => Math.max(m, Math.abs(p.net), Math.abs(p.netTrend)), 0);
+    const padded = maxAbs * 1.15 || 1;
+    return [-padded, padded];
+  }, [data]);
 
   return (
     <div ref={captureRef} style={{ width: "100%" }}>
@@ -90,6 +95,7 @@ export default function NetFlowChart({
               minTickGap={44}
             />
             <YAxis
+              domain={yDomain}
               stroke="var(--baseline)"
               tick={{ fill: "var(--text-muted)", fontSize: 11 }}
               width={56}
@@ -111,28 +117,6 @@ export default function NetFlowChart({
             />
             <Legend wrapperStyle={{ fontSize: 11.5, color: "var(--text-secondary)" }} />
             <ReferenceLine y={0} stroke="var(--baseline)" strokeWidth={1} />
-            <Area
-              type="monotone"
-              dataKey="netInflow"
-              legendType="none"
-              stroke="none"
-              fill="var(--net-inflow)"
-              fillOpacity={0.16}
-              baseValue={0}
-              isAnimationActive={false}
-              tooltipType="none"
-            />
-            <Area
-              type="monotone"
-              dataKey="netOutflow"
-              legendType="none"
-              stroke="none"
-              fill="var(--net-outflow)"
-              fillOpacity={0.16}
-              baseValue={0}
-              isAnimationActive={false}
-              tooltipType="none"
-            />
             <Line
               type="monotone"
               dataKey="net"
