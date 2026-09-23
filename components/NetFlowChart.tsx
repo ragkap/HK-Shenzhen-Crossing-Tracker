@@ -42,6 +42,12 @@ export default function NetFlowChart({
     (h) => first && last && h.end >= first && h.start <= last
   );
 
+  // Trend is a straight line, so its sign is just the direction from first
+  // to last point: rising means net is moving toward inflow (good for HK).
+  const isImproving =
+    data.length >= 2 && data[data.length - 1].netTrend > data[0].netTrend;
+  const trendColor = isImproving ? "var(--net-inflow)" : "var(--net-outflow)";
+
   // Fit the axis to the actual data range (not forced symmetric around
   // zero) so the line uses the full plot height instead of being squished
   // into a sliver when net sits mostly on one side of zero.
@@ -135,15 +141,15 @@ export default function NetFlowChart({
               type="monotone"
               dataKey="net"
               name={`Net, southbound − northbound (${window}d avg)`}
-              stroke="var(--net)"
+              stroke={trendColor}
               strokeWidth={2}
               dot={false}
             />
             <Line
               type="monotone"
               dataKey="netTrend"
-              name="Net trend"
-              stroke="var(--net)"
+              name={`Net trend (${isImproving ? "rising" : "falling"})`}
+              stroke={trendColor}
               strokeWidth={2}
               strokeOpacity={0.9}
               strokeDasharray="7 4"
