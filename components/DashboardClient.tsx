@@ -405,6 +405,10 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
           HK Immigration Department — Statistics on Daily Passenger Traffic
         </a>
         . Holiday windows are hand-curated and approximate — verify against the official gazette before relying on them.
+        <br />
+        Disclaimer: Smartkarma makes no assurance about the accuracy of the generated data and
+        results. Data is indicative only and should be independently checked for accuracy and
+        confirmed before use.
       </footer>
     </div>
   );
