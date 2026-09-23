@@ -137,6 +137,36 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
     });
   }, [totals.dates, southboundMA, northboundMA, chartStart]);
 
+  // Annual seasonally-adjusted view: a 365-day trailing average of the raw
+  // daily totals averages out weekly and annual (holiday/Golden Week)
+  // seasonality by construction, leaving the underlying level/trend.
+  const SEASONAL_WINDOW = 365;
+  const southboundSA = useMemo(() => rollingAverage(totals.southbound, SEASONAL_WINDOW), [totals]);
+  const northboundSA = useMemo(() => rollingAverage(totals.northbound, SEASONAL_WINDOW), [totals]);
+
+  const saChartData = useMemo(() => {
+    const southboundSlice = southboundSA.slice(chartStart);
+    const northboundSlice = northboundSA.slice(chartStart);
+    const netSlice = southboundSlice.map((v, i) => v - northboundSlice[i]);
+    const southboundTrend = linearTrend(southboundSlice);
+    const northboundTrend = linearTrend(northboundSlice);
+    const netTrend = linearTrend(netSlice);
+    return totals.dates.slice(chartStart).map((date, i) => {
+      const net = netSlice[i];
+      return {
+        date,
+        southbound: southboundSlice[i],
+        northbound: northboundSlice[i],
+        southboundTrend: southboundTrend[i],
+        northboundTrend: northboundTrend[i],
+        net,
+        netTrend: netTrend[i],
+        netInflow: net >= 0 ? net : 0,
+        netOutflow: net < 0 ? net : 0,
+      };
+    });
+  }, [totals.dates, southboundSA, northboundSA, chartStart]);
+
   const breakdownCrossings = includeBridge
     ? [...SHENZHEN_LAND_CROSSINGS, EXPRESS_RAIL, HZMB]
     : includeRail
@@ -247,6 +277,15 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
       </section>
 
       <Card
+        title="Net flow"
+        subtitle={`${avgWindow}-day rolling average, ${
+          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
+        }. Southbound minus northbound.`}
+      >
+        <NetFlowChart data={chartData} window={avgWindow} />
+      </Card>
+
+      <Card
         title="Trend"
         subtitle={`${avgWindow}-day rolling average, ${
           rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
@@ -256,12 +295,21 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
       </Card>
 
       <Card
-        title="Net flow"
-        subtitle={`${avgWindow}-day rolling average, ${
+        title="Net flow — seasonally adjusted"
+        subtitle={`365-day trailing average, ${
           rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
-        }. Southbound minus northbound.`}
+        }. Averaging a full year smooths out weekly and annual seasonality (weekends, Golden Week, CNY), leaving the underlying level.`}
       >
-        <NetFlowChart data={chartData} window={avgWindow} />
+        <NetFlowChart data={saChartData} window={SEASONAL_WINDOW} />
+      </Card>
+
+      <Card
+        title="Trend — seasonally adjusted"
+        subtitle={`365-day trailing average, ${
+          rangeDays === Infinity ? "full history" : `last ${rangeDays} days`
+        }. Same seasonal smoothing applied to southbound and northbound individually.`}
+      >
+        <TrendChart data={saChartData} window={SEASONAL_WINDOW} />
       </Card>
 
       <Card
@@ -278,11 +326,21 @@ export default function DashboardClient({ rows, asOf }: { rows: DailyRow[]; asOf
           </div>
         }
       >
-        <CrossingBreakdownChart dates={breakdownDates} series={breakdownSeries} window={avgWindow} />
+        <CrossingBreakdownChart
+          dates={breakdownDates}
+          series={breakdownSeries}
+          window={avgWindow}
+          filename={`hk-shenzhen-by-crossing-${breakdownFlow}-${avgWindow}d`}
+        />
       </Card>
 
       <Card title="Sheung Shui feed vs. resident-leaning crossings" subtitle={`${breakdownFlow === "southbound" ? "Southbound" : "Northbound"}, ${avgWindow}-day rolling average.`}>
-        <CrossingBreakdownChart dates={breakdownDates} series={groupSeries} window={avgWindow} />
+        <CrossingBreakdownChart
+          dates={breakdownDates}
+          series={groupSeries}
+          window={avgWindow}
+          filename={`hk-shenzhen-crossing-groups-${breakdownFlow}-${avgWindow}d`}
+        />
       </Card>
 
       <Card title="Last 7 days" subtitle="Raw daily counts vs. the same weekday 364 days earlier.">

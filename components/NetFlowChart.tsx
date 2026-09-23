@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -15,6 +16,7 @@ import {
 } from "recharts";
 import { formatDateShort } from "@/lib/aggregate";
 import { HOLIDAYS } from "@/lib/holidays";
+import ChartExportFooter from "./ChartExportFooter";
 
 type Point = {
   date: string;
@@ -31,6 +33,7 @@ export default function NetFlowChart({
   data: Point[];
   window: number;
 }) {
+  const captureRef = useRef<HTMLDivElement>(null);
   const first = data[0]?.date;
   const last = data[data.length - 1]?.date;
   const visibleHolidays = HOLIDAYS.filter(
@@ -38,8 +41,8 @@ export default function NetFlowChart({
   );
 
   return (
-    <div style={{ width: "100%" }}>
-      <div style={{ width: "100%", height: 360, position: "relative" }}>
+    <div ref={captureRef} style={{ width: "100%" }}>
+      <div style={{ width: "100%", height: 480, position: "relative" }}>
         <div
           style={{
             position: "absolute",
@@ -143,10 +146,9 @@ export default function NetFlowChart({
               dataKey="netTrend"
               name="Net trend"
               stroke="var(--net)"
-              strokeWidth={1.5}
-              strokeOpacity={0.6}
-              strokeDasharray="1 5"
-              strokeLinecap="round"
+              strokeWidth={2}
+              strokeOpacity={0.9}
+              strokeDasharray="7 4"
               dot={false}
               isAnimationActive={false}
             />
@@ -156,8 +158,13 @@ export default function NetFlowChart({
       <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "8px 2px 0", lineHeight: 1.5 }}>
         Net = southbound minus northbound. Above zero, more people are entering HK than leaving it
         &mdash; good for HK footfall. Below zero, more residents are leaving for Shenzhen than
-        visitors are arriving.
+        visitors are arriving. Dashed line is the straight-line trend over the selected range.
       </p>
+      <ChartExportFooter
+        source="Hong Kong Immigration Department"
+        captureRef={captureRef}
+        filename={`hk-shenzhen-net-flow-${window}d`}
+      />
     </div>
   );
 }

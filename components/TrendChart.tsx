@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -13,6 +14,7 @@ import {
 } from "recharts";
 import { formatDateShort } from "@/lib/aggregate";
 import { HOLIDAYS } from "@/lib/holidays";
+import ChartExportFooter from "./ChartExportFooter";
 
 type Point = {
   date: string;
@@ -29,6 +31,7 @@ export default function TrendChart({
   data: Point[];
   window: number;
 }) {
+  const captureRef = useRef<HTMLDivElement>(null);
   const first = data[0]?.date;
   const last = data[data.length - 1]?.date;
   const visibleHolidays = HOLIDAYS.filter(
@@ -36,7 +39,7 @@ export default function TrendChart({
   );
 
   return (
-    <div style={{ width: "100%" }}>
+    <div ref={captureRef} style={{ width: "100%" }}>
       <div style={{ width: "100%", height: 480 }}>
         <ResponsiveContainer>
           <ComposedChart data={data} margin={{ top: 8, right: 8, left: 4, bottom: 4 }}>
@@ -98,10 +101,9 @@ export default function TrendChart({
               dataKey="southboundTrend"
               name="Southbound trend"
               stroke="var(--southbound)"
-              strokeWidth={1.5}
-              strokeOpacity={0.6}
-              strokeDasharray="1 5"
-              strokeLinecap="round"
+              strokeWidth={2}
+              strokeOpacity={0.9}
+              strokeDasharray="7 4"
               dot={false}
               isAnimationActive={false}
             />
@@ -118,10 +120,9 @@ export default function TrendChart({
               dataKey="northboundTrend"
               name="Northbound trend"
               stroke="var(--northbound)"
-              strokeWidth={1.5}
-              strokeOpacity={0.6}
-              strokeDasharray="1 5"
-              strokeLinecap="round"
+              strokeWidth={2}
+              strokeOpacity={0.9}
+              strokeDasharray="7 4"
               dot={false}
               isAnimationActive={false}
             />
@@ -129,8 +130,13 @@ export default function TrendChart({
         </ResponsiveContainer>
       </div>
       <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "8px 2px 0", lineHeight: 1.5 }}>
-        Dotted lines are the straight-line trend over the selected range.
+        Dashed lines are the straight-line trend over the selected range.
       </p>
+      <ChartExportFooter
+        source="Hong Kong Immigration Department"
+        captureRef={captureRef}
+        filename={`hk-shenzhen-trend-${window}d`}
+      />
     </div>
   );
 }
