@@ -8,9 +8,13 @@ const roboto = Roboto({
   variable: "--font-roboto",
 });
 
-const siteUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+// VERCEL_PROJECT_PRODUCTION_URL is the stable production domain; VERCEL_URL
+// is per-deployment (changes on every preview/production build) and is the
+// fallback for preview deployments.
+const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+const siteUrl = vercelHost ? `https://${vercelHost}` : "http://localhost:3000";
 
-const title = "HK ↔ Shenzhen Crossing Tracker";
+const title = "HK-Shenzhen Crossing Tracker";
 const description =
   "Daily southbound and northbound passenger traffic at Hong Kong–Shenzhen crossings, from HK Immigration Department open data.";
 

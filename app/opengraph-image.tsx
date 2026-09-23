@@ -30,7 +30,7 @@ export default async function Image() {
           </div>
         </div>
         <div style={{ display: "flex", fontSize: 62, fontWeight: 700, color: "#0b0b0b", lineHeight: 1.15 }}>
-          HK &#8596; Shenzhen Crossing Tracker
+          HK-Shenzhen Crossing Tracker
         </div>
         <div style={{ display: "flex", fontSize: 28, color: "#52514e", marginTop: 26, maxWidth: 900 }}>
           Daily southbound &amp; northbound passenger traffic at Hong Kong&ndash;Shenzhen crossings
